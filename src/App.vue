@@ -1,5 +1,7 @@
 <template>
-  <div id="app">首页</div>
+  <div id="app">
+    <router-view></router-view>
+  </div>
 </template>
 
 <script>
