@@ -73,14 +73,15 @@ export default {
       // 由于服务器返回的属性中 data 属性中的数据才是真实数据，因此采用解构赋值的将 data 解构出来赋值给 res；
       // 最后在通过 res 中的 meta 属性中的返回状态码进行判断是否登录成功
       this.$refs.loginFormRef.validate(async valid => {
-        // console.log(valid)
         if (!valid) return false
         const { data: res } = await this.$api.post('login', this.loginForm)
         console.log(res)
-        if (res.meta.status === 200) {
-          console.log('登录成功')
-        }
-        console.log('登录失败')
+        if (res.meta.status !== 200) return this.$message.error('登录失败')
+        this.$message.success('登录成功')
+        // 登录成功后：将 token 保存到 sessionStorage 中；
+        // 项目中除了登录之外其他 api 接口，必须在登录之后才能访问；
+        // token 应该只在当前网站打开期间生效，所以才将 token 保存在 sessionStorage 中；
+        // 通过编程式导航跳转到后台的主页，路由地址配置 /home
       })
     }
   }
