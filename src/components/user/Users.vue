@@ -20,6 +20,43 @@
           <el-button type="primary">添加用户</el-button>
         </el-col>
       </el-row>
+      <!-- 用户列表 -->
+      <el-table :data="usersList" style="width: 100%" border stripe>
+        <el-table-column type="index" label="#"></el-table-column>
+        <el-table-column prop="username" label="姓名"></el-table-column>
+        <el-table-column prop="email" label="邮箱"></el-table-column>
+        <el-table-column prop="mobile" label="电话"></el-table-column>
+        <el-table-column prop="role_name" label="角色"></el-table-column>
+        <el-table-column label="状态">
+          <!-- slot-scope="scope" 可以接收当前作用域插槽中的数据 -->
+          <template slot-scope="scope">
+            <el-switch v-model="scope.row.mg_state"></el-switch>
+          </template>
+        </el-table-column>
+        <el-table-column label="操作" width="180px">
+          <template>
+            <el-tooltip effect="dark" content="编辑" placement="top" :enterable="false">
+              <el-button type="primary" icon="el-icon-edit" size="mini"></el-button>
+            </el-tooltip>
+            <el-tooltip effect="dark" content="删除" placement="top" :enterable="false">
+              <el-button type="danger" icon="el-icon-delete" size="mini"></el-button>
+            </el-tooltip>
+            <el-tooltip effect="dark" content="分配角色" placement="top" :enterable="false">
+              <el-button type="warning" icon="el-icon-setting" size="mini"></el-button>
+            </el-tooltip>
+          </template>
+        </el-table-column>
+      </el-table>
+      <!-- 分页栏 -->
+      <el-pagination
+        @size-change="handleSizeChange"
+        @current-change="handleCurrentChange"
+        :current-page="queryUsersInfo.pagenum"
+        :page-sizes="[2, 5, 10, 100]"
+        :page-size="queryUsersInfo.pagesize"
+        layout="total, sizes, prev, pager, next, jumper"
+        :total="total"
+      ></el-pagination>
     </el-card>
   </div>
 </template>
@@ -32,10 +69,10 @@ export default {
       queryUsersInfo: {
         query: '',
         pagenum: 1,
-        pagesize: 10
+        pagesize: 2
       },
       usersList: [],
-      total: 1
+      total: 0
     }
   },
   created() {
@@ -52,7 +89,19 @@ export default {
       }
       this.usersList = res.data.users
       this.total = res.data.total
-      console.log(res)
+      // console.log(res)
+    },
+    // 2、监听页面改变事件
+    handleSizeChange(newSize) {
+      // console.log(newSize)
+      this.queryUsersInfo.pagesize = newSize
+      this.getUsersInfoList()
+    },
+    // 3、监听页码改变事件
+    handleCurrentChange(newPage) {
+      // console.log(newPage)
+      this.queryUsersInfo.pagenum = newPage
+      this.getUsersInfoList()
     }
   }
 }
