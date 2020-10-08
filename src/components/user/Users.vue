@@ -30,7 +30,7 @@
         <el-table-column label="状态">
           <!-- slot-scope="scope" 可以接收当前作用域插槽中的数据 -->
           <template slot-scope="scope">
-            <el-switch v-model="scope.row.mg_state"></el-switch>
+            <el-switch v-model="scope.row.mg_state" @change="userStateChange(scope.row)"></el-switch>
           </template>
         </el-table-column>
         <el-table-column label="操作" width="180px">
@@ -102,6 +102,18 @@ export default {
       // console.log(newPage)
       this.queryUsersInfo.pagenum = newPage
       this.getUsersInfoList()
+    },
+    // 4、改变用户状态事件
+    async userStateChange(userInfo) {
+      // console.log(userInfo)
+      const { data: res } = await this.$api.put(
+        `users/${userInfo.id}/state/${userInfo.mg_state}`
+      )
+      if (res.meta.status !== 200) {
+        userInfo.mg_state = !userInfo.mg_state // 请求失败时，为了保持页面的用户状态
+        return this.$message.error('更新用户状态失败')
+      }
+      this.$message.success('更新用户状态成功')
     }
   }
 }
