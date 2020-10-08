@@ -26,7 +26,35 @@
 
 <script>
 export default {
-  name: 'Users'
+  name: 'Users',
+  data() {
+    return {
+      queryUsersInfo: {
+        query: '',
+        pagenum: 1,
+        pagesize: 10
+      },
+      usersList: [],
+      total: 1
+    }
+  },
+  created() {
+    this.getUsersInfoList()
+  },
+  methods: {
+    // 1、获取用户列表信息数据
+    async getUsersInfoList() {
+      const { data: res } = await this.$api.get('users', {
+        params: this.queryUsersInfo
+      })
+      if (res.meta.status !== 200) {
+        return this.$message.error('获取用户列表失败')
+      }
+      this.usersList = res.data.users
+      this.total = res.data.total
+      console.log(res)
+    }
+  }
 }
 </script>
 
