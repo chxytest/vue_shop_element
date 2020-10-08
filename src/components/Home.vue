@@ -38,12 +38,28 @@
 <script>
 export default {
   name: 'Home',
+  data() {
+    return {
+      menuList: []
+    }
+  },
+  created() {
+    this.getMenuList()
+  },
   methods: {
+    // 1、退出登录
     logout() {
       // 清空token
       window.sessionStorage.clear()
       // 跳转到登录页
       this.$router.push('/login')
+    },
+    // 2、获取菜单列表
+    async getMenuList() {
+      const { data: res } = await this.$api.get('menus')
+      if (res.meta.status !== 200) return this.$message.error(res.meta.msg)
+      this.menuList = res.data
+      console.log(this.menuList)
     }
   }
 }
