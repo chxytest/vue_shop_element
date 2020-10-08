@@ -20,6 +20,7 @@
           unique-opened
           :collapse="isCollapse"
           :collapse-transition="false"
+          :router="true"
         >
           <!-- 一级菜单 -->
           <el-submenu :index="item.id + ''" v-for="item in menuList" :key="item.id">
@@ -29,7 +30,7 @@
             </template>
             <!-- 二级菜单 -->
             <el-menu-item
-              :index="subItem.id + ''"
+              :index="'/' + subItem.path"
               v-for="subItem in item.children"
               :key="subItem.id"
             >
@@ -42,7 +43,9 @@
         </el-menu>
       </el-aside>
       <!-- 右侧显示内容区 -->
-      <el-main>Main</el-main>
+      <el-main>
+        <router-view></router-view>
+      </el-main>
     </el-container>
   </el-container>
 </template>
@@ -79,7 +82,7 @@ export default {
       const { data: res } = await this.$api.get('menus')
       if (res.meta.status !== 200) return this.$message.error(res.meta.msg)
       this.menuList = res.data
-      console.log(this.menuList)
+      // console.log(this.menuList)
     },
     // 3、切换菜单栏的折叠和展开
     toggleCollapse() {
