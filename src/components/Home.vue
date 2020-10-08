@@ -1,5 +1,6 @@
 <template>
   <el-container class="home-container">
+    <!-- 页面顶部 -->
     <el-header>
       <div class="header-left">
         <img src="../assets/heima.png" alt />
@@ -7,8 +8,28 @@
       </div>
       <el-button type="info" @click="logout">退出</el-button>
     </el-header>
+    <!-- 页面主体 -->
     <el-container>
-      <el-aside width="200px">Aside</el-aside>
+      <!-- 左侧菜单 -->
+      <el-aside width="200px">
+        <el-menu background-color="#333744" text-color="#fff" active-text-color="#ffd04b">
+          <!-- 一级菜单 -->
+          <el-submenu index="1">
+            <template slot="title">
+              <i class="el-icon-location"></i>
+              <span>导航一</span>
+            </template>
+            <!-- 二级菜单 -->
+            <el-menu-item index="1-4-1">
+              <template slot="title">
+                <i class="el-icon-location"></i>
+                <span>导航一</span>
+              </template>
+            </el-menu-item>
+          </el-submenu>
+        </el-menu>
+      </el-aside>
+      <!-- 右侧显示内容区 -->
       <el-main>Main</el-main>
     </el-container>
   </el-container>
