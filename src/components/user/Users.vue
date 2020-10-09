@@ -22,7 +22,7 @@
           </el-input>
         </el-col>
         <el-col :span="4">
-          <el-button type="primary">添加用户</el-button>
+          <el-button type="primary" @click="addDialogVisible = true">添加用户</el-button>
         </el-col>
       </el-row>
       <!-- 用户列表 -->
@@ -63,6 +63,35 @@
         :total="total"
       ></el-pagination>
     </el-card>
+
+    <!-- 添加用户弹窗 -->
+    <el-dialog title="添加用户" :visible.sync="addDialogVisible" width="30%" @close="addDialogClosed">
+      <!-- 弹窗中间内容区域 -->
+      <el-form
+        :model="addUserForm"
+        :rules="addUserFormRules"
+        ref="addUserFormRef"
+        label-width="70px"
+      >
+        <el-form-item label="用户名" prop="username">
+          <el-input v-model="addUserForm.username"></el-input>
+        </el-form-item>
+        <el-form-item label="密码" prop="password">
+          <el-input v-model="addUserForm.password"></el-input>
+        </el-form-item>
+        <el-form-item label="邮箱" prop="email">
+          <el-input v-model="addUserForm.email"></el-input>
+        </el-form-item>
+        <el-form-item label="手机" prop="mobile">
+          <el-input v-model="addUserForm.mobile"></el-input>
+        </el-form-item>
+      </el-form>
+      <!-- 弹窗底部按钮区域 -->
+      <span slot="footer" class="dialog-footer">
+        <el-button @click="addDialogVisible = false">取 消</el-button>
+        <el-button type="primary" @click="addUser">确 定</el-button>
+      </span>
+    </el-dialog>
   </div>
 </template>
 
@@ -70,6 +99,32 @@
 export default {
   name: 'Users',
   data() {
+    // 自定义验证邮箱
+    var checkEmail = (rule, value, callback) => {
+      const regEmail = /^([a-zA-Z0-9])+@([a-zA-Z0-9_-])+([a-zA-Z0-9_-])+/
+      if (regEmail.test(value)) {
+        // console.log(regEmail.test(value))
+        return callback()
+      } else {
+        callback(new Error('请输入合法邮箱'))
+      }
+    }
+
+    // 自定义验证手机号
+    var checkPhone = (rule, value, callback) => {
+      // console.log(typeof value, '\\\\/')
+      const phoneReg = /^1[3|4|5|7|8][0-9]{9}$/
+      if (!Number.isInteger(+value)) {
+        callback(new Error('请输入数字值'))
+      } else {
+        if (phoneReg.test(value)) {
+          callback()
+        } else {
+          callback(new Error('电话号码格式不正确'))
+        }
+      }
+    }
+
     return {
       queryUsersInfo: {
         query: '',
@@ -77,7 +132,44 @@ export default {
         pagesize: 2
       },
       usersList: [],
-      total: 0
+      total: 0,
+      addDialogVisible: false, // 表示弹窗的显示和隐藏
+      addUserForm: {
+        // 添加用户表单数据
+        username: '',
+        password: '',
+        email: '',
+        mobile: ''
+      },
+      addUserFormRules: {
+        // 添加用户表单的验证规则
+        username: [
+          { required: true, message: '请输入名称', trigger: 'blur' },
+          {
+            min: 3,
+            max: 10,
+            message: '用户名称长度在 3 ~ 10 个字符',
+            trigger: 'blur'
+          }
+        ],
+        password: [
+          { required: true, message: '请输入密码', trigger: 'blur' },
+          {
+            min: 6,
+            max: 15,
+            message: '用户密码长度在 6 ~ 15 个字符',
+            trigger: 'blur'
+          }
+        ],
+        email: [
+          { required: true, message: '请输入邮箱', trigger: 'blur' },
+          { validator: checkEmail, trigger: 'blur' }
+        ],
+        mobile: [
+          { required: true, message: '请输入手机号', trigger: 'blur' },
+          { validator: checkPhone, trigger: 'blur' }
+        ]
+      }
     }
   },
   created() {
@@ -119,6 +211,22 @@ export default {
         return this.$message.error('更新用户状态失败')
       }
       this.$message.success('更新用户状态成功')
+    },
+    // 5、清空添加用户弹窗中的输入框
+    addDialogClosed() {
+      this.$refs.addUserFormRef.resetFields()
+    },
+    // 6、添加用户
+    addUser() {
+      this.$refs.addUserFormRef.validate(async valid => {
+        if (!valid) return console.log('校验失败')
+        const { data: res } = await this.$api.post('users', this.addUserForm)
+        // console.log(res)
+        if (res.meta.status !== 201) return this.$message.error('添加用户失败')
+        this.$message.success('添加用户成功')
+        this.addDialogVisible = false
+        this.getUsersInfoList()
+      })
     }
   }
 }
