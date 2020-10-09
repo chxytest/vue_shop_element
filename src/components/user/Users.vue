@@ -12,8 +12,13 @@
       <!-- 搜索和添加按钮 -->
       <el-row :gutter="20">
         <el-col :span="8">
-          <el-input placeholder="请输入内容">
-            <el-button slot="append" icon="el-icon-search"></el-button>
+          <el-input
+            placeholder="请输入内容"
+            v-model="queryUsersInfo.query"
+            clearable
+            @clear="getUsersInfoList"
+          >
+            <el-button slot="append" icon="el-icon-search" @click="getUsersInfoList"></el-button>
           </el-input>
         </el-col>
         <el-col :span="4">
@@ -89,7 +94,7 @@ export default {
       }
       this.usersList = res.data.users
       this.total = res.data.total
-      // console.log(res)
+      console.log(res)
     },
     // 2、监听页面改变事件
     handleSizeChange(newSize) {
