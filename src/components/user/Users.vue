@@ -39,9 +39,14 @@
           </template>
         </el-table-column>
         <el-table-column label="操作" width="180px">
-          <template>
+          <template slot-scope="scope">
             <el-tooltip effect="dark" content="编辑" placement="top" :enterable="false">
-              <el-button type="primary" icon="el-icon-edit" size="mini"></el-button>
+              <el-button
+                type="primary"
+                icon="el-icon-edit"
+                size="mini"
+                @click="showEditDialog(scope.row.id)"
+              ></el-button>
             </el-tooltip>
             <el-tooltip effect="dark" content="删除" placement="top" :enterable="false">
               <el-button type="danger" icon="el-icon-delete" size="mini"></el-button>
@@ -92,6 +97,31 @@
         <el-button type="primary" @click="addUser">确 定</el-button>
       </span>
     </el-dialog>
+
+    <!-- 修改用户弹窗 -->
+    <el-dialog title="编辑用户" :visible.sync="editDialogVisible" width="50%" @close="editDialogClose">
+      <!-- 其中修改表单的校验规则复用了新增用户中的表单校验规则 addUserFormRules -->
+      <el-form
+        :model="getEditUserInfo"
+        :rules="addUserFormRules"
+        ref="getEditUserInfoRef"
+        label-width="70px"
+      >
+        <el-form-item label="用户名">
+          <el-input v-model="getEditUserInfo.username" :disabled="true"></el-input>
+        </el-form-item>
+        <el-form-item label="邮箱" prop="email">
+          <el-input v-model="getEditUserInfo.email"></el-input>
+        </el-form-item>
+        <el-form-item label="手机" prop="mobile">
+          <el-input v-model="getEditUserInfo.mobile"></el-input>
+        </el-form-item>
+      </el-form>
+      <span slot="footer" class="dialog-footer">
+        <el-button @click="editDialogVisible = false">取 消</el-button>
+        <el-button type="primary" @click="editDialogVisible = false">确 定</el-button>
+      </span>
+    </el-dialog>
   </div>
 </template>
 
@@ -133,7 +163,7 @@ export default {
       },
       usersList: [],
       total: 0,
-      addDialogVisible: false, // 表示弹窗的显示和隐藏
+      addDialogVisible: false, // 表示添加用户弹窗的显示和隐藏
       addUserForm: {
         // 添加用户表单数据
         username: '',
@@ -169,7 +199,9 @@ export default {
           { required: true, message: '请输入手机号', trigger: 'blur' },
           { validator: checkPhone, trigger: 'blur' }
         ]
-      }
+      },
+      editDialogVisible: false, // 表示编辑用户弹窗的显示和隐藏
+      getEditUserInfo: {} // 获取用户信息
     }
   },
   created() {
@@ -227,6 +259,18 @@ export default {
         this.addDialogVisible = false
         this.getUsersInfoList()
       })
+    },
+    // 7、修改用户
+    async showEditDialog(id) {
+      const { data: res } = await this.$api.get('users/' + id)
+      if (res.meta.status !== 200) return this.$message.error(res.meta.msg)
+      this.getEditUserInfo = res.data
+      console.log(this.getEditUserInfo)
+      this.editDialogVisible = true
+    },
+    // 8、关闭编辑用户弹窗时重置编辑的内容
+    editDialogClose() {
+      this.$refs.getEditUserInfoRef.resetFields()
     }
   }
 }
