@@ -119,7 +119,7 @@
       </el-form>
       <span slot="footer" class="dialog-footer">
         <el-button @click="editDialogVisible = false">取 消</el-button>
-        <el-button type="primary" @click="editDialogVisible = false">确 定</el-button>
+        <el-button type="primary" @click="editUserInfo">确 定</el-button>
       </span>
     </el-dialog>
   </div>
@@ -271,6 +271,29 @@ export default {
     // 8、关闭编辑用户弹窗时重置编辑的内容
     editDialogClose() {
       this.$refs.getEditUserInfoRef.resetFields()
+    },
+    // 9、编辑用户信息后点击确定提交表单并验证
+    editUserInfo() {
+      this.$refs.getEditUserInfoRef.validate(async valid => {
+        if (!valid) return console.log('校验不通过')
+        // 9.1 发送编辑用户信息的提交请求来修改用户信息
+        const { data: res } = await this.$api.put(
+          'users/' + this.getEditUserInfo.id,
+          {
+            email: this.getEditUserInfo.email,
+            mobile: this.getEditUserInfo.mobile
+          }
+        )
+        if (res.meta.status !== 200) {
+          return this.$message.error(res.meta.msg)
+        }
+        // 9.2 提交成功关闭弹窗
+        this.editDialogVisible = false
+        // 9.3 刷新用户列表
+        this.getUsersInfoList()
+        // 9.4 提示用户编辑成功
+        this.$message.success(res.meta.msg)
+      })
     }
   }
 }
