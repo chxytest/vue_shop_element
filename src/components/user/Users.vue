@@ -49,7 +49,12 @@
               ></el-button>
             </el-tooltip>
             <el-tooltip effect="dark" content="删除" placement="top" :enterable="false">
-              <el-button type="danger" icon="el-icon-delete" size="mini"></el-button>
+              <el-button
+                type="danger"
+                icon="el-icon-delete"
+                size="mini"
+                @click="removeUserById(scope.row.id)"
+              ></el-button>
             </el-tooltip>
             <el-tooltip effect="dark" content="分配角色" placement="top" :enterable="false">
               <el-button type="warning" icon="el-icon-setting" size="mini"></el-button>
@@ -273,7 +278,7 @@ export default {
       this.$refs.getEditUserInfoRef.resetFields()
     },
     // 9、编辑用户信息后点击确定提交表单并验证
-    editUserInfo() {
+    editUserInfo(id) {
       this.$refs.getEditUserInfoRef.validate(async valid => {
         if (!valid) return console.log('校验不通过')
         // 9.1 发送编辑用户信息的提交请求来修改用户信息
@@ -294,6 +299,37 @@ export default {
         // 9.4 提示用户编辑成功
         this.$message.success(res.meta.msg)
       })
+    },
+    // 9、通过 id 删除用户
+    async removeUserById(id) {
+      console.log(id)
+      // 1、弹窗提示用户是否删除
+      const confirmResult = await this.$confirm(
+        '此操作将永久删除该用户, 是否继续?',
+        '提示',
+        {
+          confirmButtonText: '确定',
+          cancelButtonText: '取消',
+          type: 'warning'
+        }
+      ).catch(res => {
+        return res
+      })
+      console.log(confirmResult)
+      // 2、判断用户点击是 确定 还是 取消
+      if (confirmResult !== 'confirm') {
+        return this.$message.info('已取消删除')
+      }
+      // 3、确定删除时调用删除接口
+      const { data: res } = await this.$api.delete('users/' + id)
+      console.log(res)
+      // 4、判断是否删除成功
+      if (res.meta.status !== 200) {
+        return this.$message.error('删除用户失败！')
+      }
+      // 5、提示用户删除成功
+      this.$message.success('删除用户成功')
+      this.getUsersInfoList()
     }
   }
 }
