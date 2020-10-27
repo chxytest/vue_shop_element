@@ -13,7 +13,25 @@
 
 <script>
 export default {
-  name: 'Rights'
+  name: 'Rights',
+  data() {
+    return {
+      rightsList: [] // 权限列表数据
+    }
+  },
+  created() {
+    this.getRightsList() // 获取所有权限列表数据请求
+  },
+  methods: {
+    async getRightsList() {
+      const { data: res } = await this.$api.get('rights/list')
+      if (res.meta.status !== 200) {
+        return this.$message.error(res.meta.msg)
+      }
+      this.rightsList = res.data
+      console.log(this.rightsList)
+    }
+  }
 }
 </script>
 
