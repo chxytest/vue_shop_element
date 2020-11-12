@@ -22,6 +22,7 @@
           <template slot-scope="scope">
             <el-row
               :class="['bdbottom', i1 === 0 ? 'bdtop' : '']"
+              class="vcenter"
               v-for="(item1, i1) in scope.row.children"
               :key="i1"
             >
@@ -31,7 +32,29 @@
                 <i class="el-icon-caret-right"></i>
               </el-col>
               <!-- 渲染二级和三级权限 -->
-              <el-col :span="19"></el-col>
+              <el-col :span="19">
+                <!-- 通过循环选项一级权限下的子权限 -->
+                <el-row
+                  :class="[i2 === 0 ? '' : 'bdtop']"
+                  class="vcenter"
+                  v-for="(item2, i2) in item1.children"
+                  :key="i2"
+                >
+                  <!-- 二级权限 -->
+                  <el-col :span="6">
+                    <el-tag type="success">{{item2.authName}}</el-tag>
+                    <i class="el-icon-caret-right"></i>
+                  </el-col>
+                  <!-- 三级权限 -->
+                  <el-col :span="18">
+                    <el-tag
+                      type="danger"
+                      v-for="(item3, i3) in item2.children"
+                      :key="i3"
+                    >{{item3.authName}}</el-tag>
+                  </el-col>
+                </el-row>
+              </el-col>
             </el-row>
             <!-- <pre>
             {{ scope.row }}
@@ -90,5 +113,10 @@ export default {
 
 .bdbottom {
   border-bottom: 1px solid #eee;
+}
+
+.vcenter {
+  display: flex;
+  align-items: center;
 }
 </style>
