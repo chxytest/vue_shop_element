@@ -28,7 +28,7 @@
             >
               <!-- 渲染一级权限 -->
               <el-col :span="5">
-                <el-tag>{{item1.authName}}</el-tag>
+                <el-tag closable @close="removeRightById(scope.row, item1.id)">{{item1.authName}}</el-tag>
                 <i class="el-icon-caret-right"></i>
               </el-col>
               <!-- 渲染二级和三级权限 -->
@@ -42,7 +42,11 @@
                 >
                   <!-- 二级权限 -->
                   <el-col :span="6">
-                    <el-tag type="success">{{item2.authName}}</el-tag>
+                    <el-tag
+                      type="success"
+                      closable
+                      @close="removeRightById(scope.row, item2.id)"
+                    >{{item2.authName}}</el-tag>
                     <i class="el-icon-caret-right"></i>
                   </el-col>
                   <!-- 三级权限 -->
@@ -52,15 +56,12 @@
                       v-for="(item3, i3) in item2.children"
                       :key="i3"
                       closable
-                      @close="removeRightById()"
+                      @close="removeRightById(scope.row, item3.id)"
                     >{{item3.authName}}</el-tag>
                   </el-col>
                 </el-row>
               </el-col>
             </el-row>
-            <!-- <pre>
-            {{ scope.row }}
-            </pre>-->
           </template>
         </el-table-column>
         <!-- 索引列 -->
@@ -101,7 +102,7 @@ export default {
       console.log(this.roleList)
     },
     // 根据 id 删除对应的三级权限
-    async removeRightById() {
+    async removeRightById(role, rightId) {
       // 弹窗提示用户是否要删除
       const confirmResult = await this.$confirm(
         '此操作将永久删除该文件, 是否继续?',
@@ -112,10 +113,22 @@ export default {
           type: 'warning'
         }
       ).catch(error => error)
-      console.log(confirmResult)
+      // console.log(confirmResult)
       if (confirmResult !== 'confirm') {
         return this.$message.info('取消了删除')
       }
+      // 点击确认删除的时候，调删除角色指定权限的接口
+      const { data: res } = await this.$api.delete(
+        `roles/${role.id}/rights/${rightId}`
+      )
+      console.log(res)
+      if (res.meta.status !== 200) {
+        return this.$message.error('删除权限失败！')
+      }
+      // this.getRolesList() 这样用会导致页面上的权限展开按钮又重新收起了
+      // 由于该 delete 接口返回的data, 是当前角色下最新的权限数据，
+      // 所以只需要给该角色 role 下的权限重新赋值就行，展开按钮就不会关闭
+      role.children = res.data
     }
   }
 }
