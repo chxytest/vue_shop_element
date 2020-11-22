@@ -51,6 +51,8 @@
                       type="danger"
                       v-for="(item3, i3) in item2.children"
                       :key="i3"
+                      closable
+                      @close="removeRightById()"
                     >{{item3.authName}}</el-tag>
                   </el-col>
                 </el-row>
@@ -97,6 +99,23 @@ export default {
       }
       this.roleList = res.data
       console.log(this.roleList)
+    },
+    // 根据 id 删除对应的三级权限
+    async removeRightById() {
+      // 弹窗提示用户是否要删除
+      const confirmResult = await this.$confirm(
+        '此操作将永久删除该文件, 是否继续?',
+        '提示',
+        {
+          confirmButtonText: '确定',
+          cancelButtonText: '取消',
+          type: 'warning'
+        }
+      ).catch(error => error)
+      console.log(confirmResult)
+      if (confirmResult !== 'confirm') {
+        return this.$message.info('取消了删除')
+      }
     }
   }
 }
