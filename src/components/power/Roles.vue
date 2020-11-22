@@ -72,11 +72,25 @@
           <template slot-scope>
             <el-button size="mini" type="primary" icon="el-icon-edit">编辑</el-button>
             <el-button size="mini" type="danger" icon="el-icon-delete">删除</el-button>
-            <el-button size="mini" type="warning" icon="el-icon-setting">分配权限</el-button>
+            <el-button
+              size="mini"
+              type="warning"
+              icon="el-icon-setting"
+              @click="showSetRightDialog"
+            >分配权限</el-button>
           </template>
         </el-table-column>
       </el-table>
     </el-card>
+
+    <!-- 分配权限对话框 -->
+    <el-dialog title="分配权限" :visible.sync="setRightDialogVisible" width="50%">
+      <span>这是一段信息</span>
+      <span slot="footer" class="dialog-footer">
+        <el-button @click="setRightDialogVisible = false">取 消</el-button>
+        <el-button type="primary" @click="setRightDialogVisible = false">确 定</el-button>
+      </span>
+    </el-dialog>
   </div>
 </template>
 
@@ -85,7 +99,9 @@ export default {
   name: 'Roles',
   data() {
     return {
-      roleList: [] // 角色列表数据
+      roleList: [], // 角色列表数据
+      setRightDialogVisible: false, // 分配权限对话框的显示和隐藏
+      rightsList: [] // 权限列表数据
     }
   },
   created() {
@@ -129,6 +145,17 @@ export default {
       // 由于该 delete 接口返回的data, 是当前角色下最新的权限数据，
       // 所以只需要给该角色 role 下的权限重新赋值就行，展开按钮就不会关闭
       role.children = res.data
+    },
+    // 展示分配权限功能
+    async showSetRightDialog() {
+      // 获取所有权限数据
+      const { data: res } = await this.$api.get('rights/tree')
+      if (res.meta.status !== 200) {
+        return this.$message.error('获取权限列表失败')
+      }
+      this.rightsList = res.data
+      console.log(this.rightsList)
+      this.setRightDialogVisible = true
     }
   }
 }
