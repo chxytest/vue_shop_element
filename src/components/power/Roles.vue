@@ -98,10 +98,11 @@
         default-expand-all
         :default-checked-keys="defKeys"
         node-key="id"
+        ref="treeRef"
       ></el-tree>
       <span slot="footer" class="dialog-footer">
         <el-button @click="setRightDialogVisible = false">取 消</el-button>
-        <el-button type="primary" @click="setRightDialogVisible = false">确 定</el-button>
+        <el-button type="primary" @click="allotRights">确 定</el-button>
       </span>
     </el-dialog>
   </div>
@@ -120,14 +121,15 @@ export default {
         label: 'authName',
         children: 'children'
       },
-      defKeys: [] // 默认勾选中的id
+      defKeys: [], // 默认勾选中的id
+      roleId: '' // 当前分配权限的角色id
     }
   },
   created() {
     this.getRolesList() // 获取角色列表数据
   },
   methods: {
-    // 获取角色列表数据
+    // 1、获取角色列表数据
     async getRolesList() {
       const { data: res } = await this.$api.get('roles')
       if (res.meta.status !== 200) {
@@ -136,7 +138,7 @@ export default {
       this.roleList = res.data
       // console.log(this.roleList)
     },
-    // 根据 id 删除对应的三级权限
+    // 2、根据 id 删除对应的三级权限
     async removeRightById(role, rightId) {
       // 弹窗提示用户是否要删除
       const confirmResult = await this.$confirm(
@@ -165,20 +167,22 @@ export default {
       // 所以只需要给该角色 role 下的权限重新赋值就行，展开按钮就不会关闭
       role.children = res.data
     },
-    // 展示分配权限功能
+    // 3、展示分配权限功能
     async showSetRightDialog(role) {
-      // 获取所有权限数据
+      // 1.保存获取到的角色id
+      this.roleId = role.id
+      // 2.获取所有权限数据
       const { data: res } = await this.$api.get('rights/tree')
       if (res.meta.status !== 200) {
         return this.$message.error('获取权限列表失败')
       }
       this.rightsList = res.data
-      console.log(this.rightsList)
-      // 递归获取三级节点的id
+      // console.log(this.rightsList)
+      // 3.递归获取三级节点的id
       this.getLeafKeys(role, this.defKeys)
       this.setRightDialogVisible = true
     },
-    // 通过递归的形式获取三级权限的id, 并保存到 defKeyss 中
+    // 4、通过递归的形式获取三级权限的id, 并保存到 defKeyss 中
     getLeafKeys(node, arr) {
       // node 指是否是三级节点，arr 数组用来保存数据
       if (!node.children) {
@@ -188,9 +192,36 @@ export default {
         this.getLeafKeys(item, arr)
       })
     },
-    // 关闭分配权限对话框，并清理 defKeys 中的数据
+    // 5、关闭分配权限对话框，并清理 defKeys 中的数据
     setRightDialogClose() {
       this.defKeys = []
+    },
+    // 6、给角色分配权限
+    async allotRights() {
+      // 1.先拿到所有的key，即获取所有全选或半选权限的id值
+      const keys = [
+        ...this.$refs.treeRef.getCheckedKeys(),
+        ...this.$refs.treeRef.getHalfCheckedKeys()
+      ]
+      // 2.将 keys 拼接成由 , 分隔的字符串
+      const idStr = keys.join(',')
+      // console.log(idStr)
+      // 3.发送角色授权请求
+      const { data: res } = await this.$api.post(
+        `roles/${this.roleId}/rights`,
+        { rids: idStr }
+      )
+      // console.log(res)
+      // 4.判断是否授权成功
+      if (res.meta.status !== 200) {
+        return this.$message.error('分配角色权限失败！')
+      }
+      // 5.提示授权成功
+      this.$message.success('分配角色权限成功！')
+      // 6.刷新角色权限列表
+      this.getRolesList()
+      // 7.关闭分配权限弹窗
+      this.setRightDialogVisible = false
     }
   }
 }
