@@ -57,7 +57,12 @@
               ></el-button>
             </el-tooltip>
             <el-tooltip effect="dark" content="分配角色" placement="top" :enterable="false">
-              <el-button type="warning" icon="el-icon-setting" size="mini"></el-button>
+              <el-button
+                type="warning"
+                icon="el-icon-setting"
+                size="mini"
+                @click="setUserRole(scope.row)"
+              ></el-button>
             </el-tooltip>
           </template>
         </el-table-column>
@@ -125,6 +130,34 @@
       <span slot="footer" class="dialog-footer">
         <el-button @click="editDialogVisible = false">取 消</el-button>
         <el-button type="primary" @click="editUserInfo">确 定</el-button>
+      </span>
+    </el-dialog>
+
+    <!-- 分配角色弹窗 -->
+    <el-dialog
+      title="分配角色"
+      :visible.sync="setRoleDialogVisible"
+      width="50%"
+      @closed="setRoleDialogClosed"
+    >
+      <div>
+        <p>当前的用户：{{ userInfo.username }}</p>
+        <p>当前的用户：{{ userInfo.role_name }}</p>
+        <p>
+          分配新角色：
+          <el-select v-model="selectedRoleId" placeholder="请选择">
+            <el-option
+              v-for="item in allRolesList"
+              :key="item.id"
+              :label="item.roleName"
+              :value="item.id"
+            ></el-option>
+          </el-select>
+        </p>
+      </div>
+      <span slot="footer" class="dialog-footer">
+        <el-button @click="setRoleDialogVisible = false">取 消</el-button>
+        <el-button type="primary" @click="saveRoleInfo()">确 定</el-button>
       </span>
     </el-dialog>
   </div>
@@ -206,7 +239,11 @@ export default {
         ]
       },
       editDialogVisible: false, // 表示编辑用户弹窗的显示和隐藏
-      getEditUserInfo: {} // 获取用户信息
+      getEditUserInfo: {}, // 获取用户信息
+      setRoleDialogVisible: false, // 表示分配角色弹窗的显示和隐藏
+      userInfo: {}, // 表示用户分配角色前的用户信息
+      allRolesList: [], // 获取是所有角色信息
+      selectedRoleId: '' // 已选中的角色 id 值
     }
   },
   created() {
@@ -223,7 +260,7 @@ export default {
       }
       this.usersList = res.data.users
       this.total = res.data.total
-      console.log(res)
+      // console.log(res)
     },
     // 2、监听页面改变事件
     handleSizeChange(newSize) {
@@ -270,7 +307,7 @@ export default {
       const { data: res } = await this.$api.get('users/' + id)
       if (res.meta.status !== 200) return this.$message.error(res.meta.msg)
       this.getEditUserInfo = res.data
-      console.log(this.getEditUserInfo)
+      // console.log(this.getEditUserInfo)
       this.editDialogVisible = true
     },
     // 8、关闭编辑用户弹窗时重置编辑的内容
@@ -300,9 +337,9 @@ export default {
         this.$message.success(res.meta.msg)
       })
     },
-    // 9、通过 id 删除用户
+    // 10、通过 id 删除用户
     async removeUserById(id) {
-      console.log(id)
+      // console.log(id)
       // 1、弹窗提示用户是否删除
       const confirmResult = await this.$confirm(
         '此操作将永久删除该用户, 是否继续?',
@@ -315,14 +352,14 @@ export default {
       ).catch(res => {
         return res
       })
-      console.log(confirmResult)
+      // console.log(confirmResult)
       // 2、判断用户点击是 确定 还是 取消
       if (confirmResult !== 'confirm') {
         return this.$message.info('已取消删除')
       }
       // 3、确定删除时调用删除接口
       const { data: res } = await this.$api.delete('users/' + id)
-      console.log(res)
+      // console.log(res)
       // 4、判断是否删除成功
       if (res.meta.status !== 200) {
         return this.$message.error('删除用户失败！')
@@ -330,6 +367,49 @@ export default {
       // 5、提示用户删除成功
       this.$message.success('删除用户成功')
       this.getUsersInfoList()
+    },
+    // 11、给用户分配角色
+    async setUserRole(userInfo) {
+      // 1.弹窗打开时显示当前的用户信息
+      this.userInfo = userInfo
+      // 2.弹窗打开前，获取所有的角色列表
+      const { data: res } = await this.$api.get('roles')
+      if (res.meta.status !== 200) {
+        return this.$message.error('获取所有角色数据失败！')
+      }
+      this.allRolesList = res.data
+      // console.log(this.allRolesList)
+      this.setRoleDialogVisible = true
+    },
+    // 12、点击确定保存分配给用户的角色
+    async saveRoleInfo() {
+      // 1.判断是否有选择分配的角色
+      if (!this.selectedRoleId) {
+        return this.$message.error('请选中要分配的角色！')
+      }
+      // 2.选择分配的角色后，发送请求保存
+      const { data: res } = await this.$api.put(
+        `users/${this.userInfo.id}/role`,
+        {
+          rid: this.selectedRoleId
+        }
+      )
+      // console.log(res)
+      // 3.判断角色是否分配成功
+      if (res.meta.status !== 200) {
+        return this.$message.error('用户分配角色失败！')
+      }
+      // 4.分配成功并刷新用户列表
+      this.$message.success(res.meta.msg)
+      this.getUsersInfoList()
+      // 5.关闭分配用户角色弹窗
+      this.setRoleDialogVisible = false
+    },
+    // 13、监听关闭分配角色弹窗，关闭时清空角色选择框和 userInfo
+    setRoleDialogClosed() {
+      this.selectedRoleId = ''
+      this.userInfo = []
+      // console.log(this.userInfo)
     }
   }
 }
