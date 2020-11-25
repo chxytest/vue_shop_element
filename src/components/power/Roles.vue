@@ -76,7 +76,12 @@
               icon="el-icon-edit"
               @click="showEditRuleDialog(scope.row.id)"
             >编辑</el-button>
-            <el-button size="mini" type="danger" icon="el-icon-delete">删除</el-button>
+            <el-button
+              size="mini"
+              type="danger"
+              icon="el-icon-delete"
+              @click="removeRoleById(scope.row.id)"
+            >删除</el-button>
             <el-button
               size="mini"
               type="warning"
@@ -244,7 +249,7 @@ export default {
     async showEditRuleDialog(roleId) {
       // 获取角色信息
       const { data: res } = await this.$api.get(`roles/${roleId}`)
-      console.log(res)
+      // console.log(res)
       if (res.meta.status !== 200) {
         return this.$message.error('获取角色信息失败！')
       }
@@ -269,7 +274,7 @@ export default {
             roleDesc: this.getEditRoleInfo.roleDesc
           }
         )
-        console.log(res)
+        // console.log(res)
         // 判断是否提交成功
         if (res.meta.status !== 200) {
           return this.$message.error('编辑角色失败！')
@@ -280,7 +285,35 @@ export default {
         this.editRoleDialogVisible = false
       })
     },
-    // 根据 id 删除对应的三级权限
+    // 7、删除角色信息
+    async removeRoleById(roleId) {
+      // 弹窗提示是否删除角色
+      const confirmResult = await this.$confirm(
+        '此操作将永久删除该角色, 是否继续?',
+        '提示',
+        {
+          confirmButtonText: '确定',
+          cancelButtonText: '取消',
+          type: 'warning'
+        }
+      ).catch(err => {
+        return err
+      })
+      // console.log(confirmResult, roleId)
+      // 判断是否删除
+      if (confirmResult !== 'confirm') {
+        return this.$message.error('已取消删除！')
+      }
+      // 确定删除，并发送请求
+      const { data: res } = await this.$api.delete('roles/' + roleId)
+      // console.log(res)
+      // 判断删除成功，并刷新列表
+      if (res.meta.status !== 200) {
+        return this.$message.error('删除角色失败！')
+      }
+      this.getRolesList()
+    },
+    // 8、根据 id 删除对应的三级权限
     async removeRightById(role, rightId) {
       // 弹窗提示用户是否要删除
       const confirmResult = await this.$confirm(
@@ -309,7 +342,7 @@ export default {
       // 所以只需要给该角色 role 下的权限重新赋值就行，展开按钮就不会关闭
       role.children = res.data
     },
-    // 展示分配权限功能
+    // 9、展示分配权限功能
     async showSetRightDialog(role) {
       // 1.保存获取到的角色id
       this.roleId = role.id
@@ -324,7 +357,7 @@ export default {
       this.getLeafKeys(role, this.defKeys)
       this.setRightDialogVisible = true
     },
-    // 通过递归的形式获取三级权限的id, 并保存到 defKeyss 中
+    // 10、通过递归的形式获取三级权限的id, 并保存到 defKeyss 中
     getLeafKeys(node, arr) {
       // node 指是否是三级节点，arr 数组用来保存数据
       if (!node.children) {
@@ -334,11 +367,11 @@ export default {
         this.getLeafKeys(item, arr)
       })
     },
-    // 关闭分配权限对话框，并清理 defKeys 中的数据
+    // 11、关闭分配权限对话框，并清理 defKeys 中的数据
     setRightDialogClose() {
       this.defKeys = []
     },
-    // 给角色分配权限
+    // 12、给角色分配权限
     async allotRights() {
       // 1.先拿到所有的key，即获取所有全选或半选权限的id值
       const keys = [

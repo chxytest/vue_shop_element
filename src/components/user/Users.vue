@@ -349,8 +349,8 @@ export default {
           cancelButtonText: '取消',
           type: 'warning'
         }
-      ).catch(res => {
-        return res
+      ).catch(err => {
+        return err
       })
       // console.log(confirmResult)
       // 2、判断用户点击是 确定 还是 取消
