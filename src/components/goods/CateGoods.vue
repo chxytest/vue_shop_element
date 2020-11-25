@@ -12,11 +12,13 @@
       <!-- 添加分类按钮 -->
       <el-row>
         <el-col>
-          <el-button type="primary">添加分类</el-button>
+          <el-button type="primary" @click="addCategoriesGoods">添加分类</el-button>
         </el-col>
       </el-row>
+
       <!-- 分类列表区域 -->
       <tree-table
+        style="margin-top: 15px"
         :data="categoriesList"
         :columns="columns"
         :selection-type="false"
@@ -46,8 +48,52 @@
           <el-button type="danger" icon="el-icon-delete" size="mini">删除</el-button>
         </template>
       </tree-table>
+
       <!-- 翻页栏 -->
+      <el-pagination
+        @size-change="handleSizeChange"
+        @current-change="handleCurrentChange"
+        :current-page="queryInfo.pagenum"
+        :page-size="queryInfo.pagesize"
+        :page-sizes="[3, 5, 10, 15]"
+        layout="total, sizes, prev, pager, next, jumper"
+        :total="categoriesTotal"
+      ></el-pagination>
     </el-card>
+
+    <!-- 添加分类弹框 -->
+    <el-dialog
+      title="添加分类"
+      :visible.sync="addCategoriesDialogVisible"
+      width="50%"
+      @close="addCategoriesDialogClosed"
+    >
+      <!-- 分类表单区域 -->
+      <el-form
+        :model="addCategoriesForm"
+        :rules="addCategoriesFormRules"
+        ref="addCategoriesFormRef"
+        label-width="100px"
+      >
+        <el-form-item label="分类名称：" prop="cat_name">
+          <el-input v-model="addCategoriesForm.cat_name"></el-input>
+        </el-form-item>
+        <el-form-item label="父级分类：">
+          <el-cascader
+            v-model="selectedKeys"
+            :options="parentCategoriesList"
+            :props="cascaderProps"
+            @change="parentCategoriesChanged"
+            clearable
+          ></el-cascader>
+        </el-form-item>
+      </el-form>
+      <!-- 按钮区域 -->
+      <span slot="footer" class="dialog-footer">
+        <el-button @click="addCategoriesDialogVisible = false">取 消</el-button>
+        <el-button type="primary" @click="addCategoriesEnter">确 定</el-button>
+      </span>
+    </el-dialog>
   </div>
 </template>
 
@@ -69,7 +115,30 @@ export default {
         { label: '是否有效', type: 'template', template: 'isok' }, // type表示当前列定义为模板列，template当前列使用模板的名称
         { label: '排序', type: 'template', template: 'order' },
         { label: '操作', type: 'template', template: 'option' }
-      ]
+      ],
+      addCategoriesDialogVisible: false, // 控制添加分类弹窗的显示和隐藏
+      addCategoriesForm: {
+        // 添加分类的表单数据
+        cat_pid: 0,
+        cat_name: '',
+        cat_level: 0
+      },
+      addCategoriesFormRules: {
+        // 添加分类的表单校验规则
+        cat_name: [
+          { required: true, message: '请输入分类名称', trigger: 'blur' }
+        ]
+      },
+      parentCategoriesList: [], //  父级分类列表数据
+      cascaderProps: {
+        // 指定每一级的配置对象
+        expandTrigger: 'hover',
+        label: 'cat_name',
+        value: 'cat_id',
+        children: 'children',
+        checkStrictly: true
+      },
+      selectedKeys: [] // 选中的父级分类的id数组
     }
   },
   created() {
@@ -88,13 +157,81 @@ export default {
       }
       // 将获取到的数据保存到 categoriesList 中
       this.categoriesList = res.data.result
-      console.log(this.categoriesList)
+      // console.log(this.categoriesList)
       // 将获取到总条数保存到 categoriesTotal 中
       this.categoriesTotal = res.data.total
+    },
+    // 2、监听 pagesize 的变化
+    handleSizeChange(newSize) {
+      // 将新的每页显示数量赋值给 pagesize ，并发送请求更新页面
+      this.queryInfo.pagesize = newSize
+      this.getCategories()
+    },
+    // 3、监听 pagenum 的变化
+    handleCurrentChange(newPage) {
+      // 将新的页码数赋值给 pagenum ， 并发送请求更新页面
+      this.queryInfo.pagenum = newPage
+      this.getCategories()
+    },
+    // 4、添加商品分类弹窗
+    addCategoriesGoods() {
+      this.getParentategoriesList()
+      this.addCategoriesDialogVisible = true
+    },
+    // 5、获取父级数据列表
+    async getParentategoriesList() {
+      const { data: res } = await this.$api.get('categories', {
+        params: { type: 2 }
+      })
+      // 判断请求是否成功
+      if (res.meta.status !== 200) {
+        return this.$message.error('获取父级分类数据失败！')
+      }
+      // console.log(res)
+      this.parentCategoriesList = res.data
+    },
+    // 6、监控父级分类的选定
+    parentCategoriesChanged() {
+      console.log(this.selectedKeys)
+      // 判断如果 selectedKeys 数组中的 length 大于 0 ，则选中的父级分类
+      // 否则没有选中任何父级分类
+      if (this.selectedKeys.length > 0) {
+        // 父级分类的 id
+        this.addCategoriesForm.cat_id = this.selectedKeys[
+          this.selectedKeys.length - 1
+        ]
+        // 当前分类的等级
+        this.addCategoriesForm.cat_level = this.selectedKeys.length
+        // return
+      } else {
+        this.addCategoriesForm.cat_id = 0
+        this.addCategoriesForm.cat_level = 0
+      }
+    },
+    // 7、确定添加商品分类
+    addCategoriesEnter() {
+      console.log(this.addCategoriesForm)
+      // addCategoriesDialogVisible = false
+    },
+    // 8、关闭添加商品分类弹窗
+    addCategoriesDialogClosed() {
+      // 清空表单
+      this.$refs.addCategoriesFormRef.resetFields()
+      // 清空 selectedKeys 来清空父级分类的表单
+      this.selectedKeys = []
+      // 清空 addCategoriesForm 数据
+      this.addCategoriesForm.cat_pid = 0
+      this.addCategoriesForm.cat_level = 0
     }
   }
 }
 </script>
 
-<style lang="less" scoped>
+<style lang="less">
+.el-cascader {
+  width: 100%;
+}
+.el-cascader-panel {
+  height: 300px;
+}
 </style>
