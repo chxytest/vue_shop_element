@@ -5,6 +5,7 @@ import store from './store'
 import './plugins/element.js'
 import './assets/css/global.css'
 import './assets/fonts/iconfont.css'
+import TreeTable from 'vue-table-with-tree-grid'
 
 // 导入 axios 并挂载到根实例上，设置访问基础地址路径
 import axios from 'axios'
@@ -17,6 +18,7 @@ axios.interceptors.request.use(config => {
   return config
 })
 Vue.config.productionTip = false
+Vue.component('tree-table', TreeTable)
 
 new Vue({
   router,
