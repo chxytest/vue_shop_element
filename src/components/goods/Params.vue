@@ -26,11 +26,37 @@
       </el-row>
       <!-- tab 活动标签区域 -->
       <el-tabs v-model="activeTabName" @tab-click="handleTabClick">
+        <!-- 动态参数标签内容 -->
         <el-tab-pane label="动态参数" name="many">
-          <el-button type="primary" size="mini" :disabled="isBtnDisabled">动态参数</el-button>
+          <el-button type="primary" size="mini" :disabled="isBtnDisabled">添加参数</el-button>
+          <!-- 动态参数表格区域 -->
+          <el-table :data="manyTabParams" border stripe>
+            <el-table-column type="expand"></el-table-column>
+            <el-table-column type="index" label="#"></el-table-column>
+            <el-table-column prop="attr_name" label="参数名称"></el-table-column>
+            <el-table-column label="操作">
+              <template slot-scope>
+                <el-button size="mini" type="primary" icon="el-icon-edit">编辑</el-button>
+                <el-button size="mini" type="danger" icon="el-icon-delete">删除</el-button>
+              </template>
+            </el-table-column>
+          </el-table>
         </el-tab-pane>
+        <!-- 静态参数标签内容 -->
         <el-tab-pane label="静态属性" name="only">
-          <el-button type="primary" size="mini" :disabled="isBtnDisabled">静态属性</el-button>
+          <el-button type="primary" size="mini" :disabled="isBtnDisabled">添加属性</el-button>
+          <!-- 静态属性表格区域 -->
+          <el-table :data="onlyTabParams" border stripe>
+            <el-table-column type="expand"></el-table-column>
+            <el-table-column type="index" label="#"></el-table-column>
+            <el-table-column prop="attr_name" label="属性名称"></el-table-column>
+            <el-table-column label="操作">
+              <template slot-scope>
+                <el-button size="mini" type="primary" icon="el-icon-edit">编辑</el-button>
+                <el-button size="mini" type="danger" icon="el-icon-delete">删除</el-button>
+              </template>
+            </el-table-column>
+          </el-table>
         </el-tab-pane>
       </el-tabs>
     </el-card>
@@ -52,7 +78,9 @@ export default {
         // checkStrictly: true
       },
       selectedCategoriesKeys: [], // 选中的商品分类的id数组
-      activeTabName: 'many'
+      activeTabName: 'many', // 选中的 tab 标签的名称
+      manyTabParams: [], // many标签下的数据
+      onlyTabParams: [] // only标签下的数据
     }
   },
   computed: {
@@ -107,6 +135,11 @@ export default {
         return this.$message.error('请选择商品分类！')
       }
       // console.log(res.data)
+      if (this.activeTabName === 'many') {
+        this.manyTabParams = res.data
+      } else {
+        this.onlyTabParams = res.data
+      }
     }
   }
 }
