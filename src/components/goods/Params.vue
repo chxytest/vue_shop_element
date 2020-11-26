@@ -26,8 +26,12 @@
       </el-row>
       <!-- tab 活动标签区域 -->
       <el-tabs v-model="activeTabName" @tab-click="handleTabClick">
-        <el-tab-pane label="动态参数" name="first">动态参数</el-tab-pane>
-        <el-tab-pane label="静态属性" name="second">静态属性</el-tab-pane>
+        <el-tab-pane label="动态参数" name="many">
+          <el-button type="primary" size="mini" :disabled="isBtnDisabled">动态参数</el-button>
+        </el-tab-pane>
+        <el-tab-pane label="静态属性" name="only">
+          <el-button type="primary" size="mini" :disabled="isBtnDisabled">静态属性</el-button>
+        </el-tab-pane>
       </el-tabs>
     </el-card>
   </div>
@@ -48,7 +52,20 @@ export default {
         // checkStrictly: true
       },
       selectedCategoriesKeys: [], // 选中的商品分类的id数组
-      activeTabName: 'first'
+      activeTabName: 'many'
+    }
+  },
+  computed: {
+    isBtnDisabled() {
+      // 当按钮需要被禁用时，则返回 true ， 否则返回 false
+      // 使用三元表达式时需要将 true 和 false 字符串转换成 Boolean 类型：JSON.parse(isBtnDisabled)
+      // return this.selectedCategoriesKeys.length !== 3 ? 'true' : 'false'
+      return this.selectedCategoriesKeys.length !== 3
+    },
+    selectedLastCatId() {
+      return this.selectedCategoriesKeys.length === 3
+        ? this.selectedCategoriesKeys[2]
+        : ''
     }
   },
   created() {
@@ -66,15 +83,30 @@ export default {
     },
     // 2、监控级联选择框数据变化
     handleChange() {
+      this.getCategoriesParams()
+    },
+    // 3、点击 tab 标签切换
+    handleTabClick() {
+      // console.log(this.activeTabName)
+      this.getCategoriesParams()
+    },
+    // 4、获取分类参数列表数据
+    async getCategoriesParams() {
       // 当选中的不是三级分类时，无法选中
       if (this.selectedCategoriesKeys.length !== 3) {
         this.selectedCategoriesKeys = []
       }
-      console.log(this.selectedCategoriesKeys)
-    },
-    // 3、点击 tab 标签切换
-    handleTabClick() {
-      console.log(this.activeTabName)
+      // console.log(this.selectedCategoriesKeys)
+      const {
+        data: res
+      } = await this.$api.get(
+        `categories/${this.selectedLastCatId}/attributes`,
+        { params: { sel: this.activeTabName } }
+      )
+      if (res.meta.status !== 200) {
+        return this.$message.error('请选择商品分类！')
+      }
+      // console.log(res.data)
     }
   }
 }
