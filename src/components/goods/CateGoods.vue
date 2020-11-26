@@ -43,9 +43,19 @@
           <el-tag size="mini" type="warning" v-else>三级</el-tag>
         </template>
         <!-- 操作 -->
-        <template #option>
-          <el-button type="primary" icon="el-icon-edit" size="mini">编辑</el-button>
-          <el-button type="danger" icon="el-icon-delete" size="mini">删除</el-button>
+        <template #option="option">
+          <el-button
+            type="primary"
+            icon="el-icon-edit"
+            size="mini"
+            @click="editCategories(option.row.cat_id)"
+          >编辑</el-button>
+          <el-button
+            type="danger"
+            icon="el-icon-delete"
+            size="mini"
+            @click="deleteCategories(option.row.cat_id)"
+          >删除</el-button>
         </template>
       </tree-table>
 
@@ -94,6 +104,31 @@
         <el-button type="primary" @click="addCategoriesEnter">确 定</el-button>
       </span>
     </el-dialog>
+
+    <!-- 编辑分类弹框 -->
+    <el-dialog
+      title="编辑分类"
+      :visible.sync="editCategoriesDialogVisible"
+      width="50%"
+      @close="editCategoriesDialogClosed"
+    >
+      <!-- 分类表单区域 -->
+      <el-form
+        :model="editCategoriesForm"
+        :rules="addCategoriesFormRules"
+        ref="editCategoriesFormRef"
+        label-width="100px"
+      >
+        <el-form-item label="分类名称：" prop="cat_name">
+          <el-input v-model="editCategoriesForm.cat_name"></el-input>
+        </el-form-item>
+      </el-form>
+      <!-- 按钮区域 -->
+      <span slot="footer" class="dialog-footer">
+        <el-button @click="editCategoriesDialogVisible = false">取 消</el-button>
+        <el-button type="primary" @click="editCategoriesEnter">确 定</el-button>
+      </span>
+    </el-dialog>
   </div>
 </template>
 
@@ -138,7 +173,9 @@ export default {
         children: 'children',
         checkStrictly: true
       },
-      selectedKeys: [] // 选中的父级分类的id数组
+      selectedKeys: [], // 选中的父级分类的id数组
+      editCategoriesDialogVisible: false, // 控制编辑弹框的显示和隐藏
+      editCategoriesForm: {} // 获取编辑商品分类信息
     }
   },
   created() {
@@ -192,26 +229,39 @@ export default {
     },
     // 6、监控父级分类的选定
     parentCategoriesChanged() {
-      console.log(this.selectedKeys)
+      // console.log(this.selectedKeys)
       // 判断如果 selectedKeys 数组中的 length 大于 0 ，则选中的父级分类
       // 否则没有选中任何父级分类
       if (this.selectedKeys.length > 0) {
         // 父级分类的 id
-        this.addCategoriesForm.cat_id = this.selectedKeys[
+        this.addCategoriesForm.cat_pid = this.selectedKeys[
           this.selectedKeys.length - 1
         ]
         // 当前分类的等级
         this.addCategoriesForm.cat_level = this.selectedKeys.length
         // return
       } else {
-        this.addCategoriesForm.cat_id = 0
+        this.addCategoriesForm.cat_pid = 0
         this.addCategoriesForm.cat_level = 0
       }
     },
     // 7、确定添加商品分类
     addCategoriesEnter() {
-      console.log(this.addCategoriesForm)
-      // addCategoriesDialogVisible = false
+      // console.log(this.addCategoriesForm)
+      this.$refs.addCategoriesFormRef.validate(async valid => {
+        if (!valid) return
+        const { data: res } = await this.$api.post(
+          'categories',
+          this.addCategoriesForm
+        )
+        // console.log(res)
+        if (res.meta.status !== 201) {
+          return this.$message.error('添加商品分类失败！')
+        }
+        this.$message.success('添加商品分类成功！')
+        this.getCategories()
+        this.addCategoriesDialogVisible = false
+      })
     },
     // 8、关闭添加商品分类弹窗
     addCategoriesDialogClosed() {
@@ -222,6 +272,70 @@ export default {
       // 清空 addCategoriesForm 数据
       this.addCategoriesForm.cat_pid = 0
       this.addCategoriesForm.cat_level = 0
+    },
+    // 9、删除商品分类
+    async deleteCategories(id) {
+      // console.log(id)
+      // 1.弹窗提示用户是否删除
+      const confirmResult = await this.$confirm(
+        '此操作将永久删除该商品分类, 是否继续?',
+        '提示',
+        {
+          confirmButtonText: '确定',
+          cancelButtonText: '取消',
+          type: 'warning'
+        }
+      ).catch(err => {
+        return err
+      })
+      // 2.判断用户点击是 确定 还是 取消
+      if (confirmResult !== 'confirm') {
+        return this.$message.info('已取消删除')
+      }
+      // 3.确定删除时调用删除接口
+      const { data: res } = await this.$api.delete('categories/' + id)
+      // 4.判断是否删除成功
+      if (res.meta.status !== 200) {
+        return this.$message.error('删除商品分类失败！')
+      }
+      // 5.提示用户删除成功并刷新列表
+      this.$message.success('删除商品分类成功！')
+      this.getCategories()
+    },
+    // 10、编辑商品分类弹窗
+    async editCategories(id) {
+      // console.log(id)
+      const { data: res } = await this.$api.get('categories/' + id)
+      if (res.meta.status !== 200) {
+        return this.$message.error('获取商品分类失败！')
+      }
+      this.editCategoriesForm = res.data
+      // console.log(this.editCategoriesForm)
+      this.editCategoriesDialogVisible = true
+    },
+    // 11、监控编辑商品分类弹窗关闭
+    editCategoriesDialogClosed() {
+      // this.editCategoriesDialogVisible = false
+      this.$refs.editCategoriesFormRef.resetFields()
+    },
+    // 12、编辑商品分类提交
+    editCategoriesEnter() {
+      this.$refs.editCategoriesFormRef.validate(async valid => {
+        if (!valid) return console.log('校验不通过')
+        const { data: res } = await this.$api.put(
+          'categories/' + this.editCategoriesForm.cat_id,
+          {
+            cat_name: this.editCategoriesForm.cat_name
+          }
+        )
+        // console.log(res)
+        if (res.meta.status !== 200) {
+          return this.$message.error('编辑商品分类失败！')
+        }
+        this.$message.success('编辑商品分类成功！')
+        this.getCategories()
+        this.editCategoriesDialogVisible = false
+      })
     }
   }
 }
