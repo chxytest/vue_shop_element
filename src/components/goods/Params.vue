@@ -26,10 +26,23 @@
 export default {
   name: 'Params',
   data() {
-    return {}
+    return {
+      categoriesList: [] // 所有商品分类数据
+    }
   },
-  created() {},
-  methods: {}
+  created() {
+    this.getCategoriesList()
+  },
+  methods: {
+    async getCategoriesList() {
+      const { data: res } = await this.$api.get('categories')
+      if (res.meta.status !== 200) {
+        return this.$message.error('获取商品分类失败！')
+      }
+      this.categoriesList = res.data
+      console.log(this.categoriesList)
+    }
+  }
 }
 </script>
 
