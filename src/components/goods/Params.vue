@@ -16,8 +16,19 @@
         <el-col>
           <span>选择商品分类：</span>
           <!-- 商品分类的级联选择框 -->
+          <el-cascader
+            v-model="selectedCategoriesKeys"
+            :options="categoriesList"
+            :props="propsCategories"
+            @change="handleChange"
+          ></el-cascader>
         </el-col>
       </el-row>
+      <!-- tab 活动标签区域 -->
+      <el-tabs v-model="activeTabName" @tab-click="handleTabClick">
+        <el-tab-pane label="动态参数" name="first">动态参数</el-tab-pane>
+        <el-tab-pane label="静态属性" name="second">静态属性</el-tab-pane>
+      </el-tabs>
     </el-card>
   </div>
 </template>
@@ -27,20 +38,43 @@ export default {
   name: 'Params',
   data() {
     return {
-      categoriesList: [] // 所有商品分类数据
+      categoriesList: [], // 所有商品分类数据
+      propsCategories: {
+        // 级联选择框的对应的props属性值
+        expandTrigger: 'hover',
+        value: 'cat_id',
+        label: 'cat_name',
+        children: 'children'
+        // checkStrictly: true
+      },
+      selectedCategoriesKeys: [], // 选中的商品分类的id数组
+      activeTabName: 'first'
     }
   },
   created() {
     this.getCategoriesList()
   },
   methods: {
+    // 1、请求商品分类数据
     async getCategoriesList() {
       const { data: res } = await this.$api.get('categories')
       if (res.meta.status !== 200) {
         return this.$message.error('获取商品分类失败！')
       }
       this.categoriesList = res.data
-      console.log(this.categoriesList)
+      // console.log(this.categoriesList)
+    },
+    // 2、监控级联选择框数据变化
+    handleChange() {
+      // 当选中的不是三级分类时，无法选中
+      if (this.selectedCategoriesKeys.length !== 3) {
+        this.selectedCategoriesKeys = []
+      }
+      console.log(this.selectedCategoriesKeys)
+    },
+    // 3、点击 tab 标签切换
+    handleTabClick() {
+      console.log(this.activeTabName)
     }
   }
 }
@@ -49,5 +83,8 @@ export default {
 <style lang="less">
 .select-goods-categories {
   margin: 15px 0;
+}
+.el-cascader {
+  width: 300px;
 }
 </style>
