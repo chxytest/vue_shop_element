@@ -12,11 +12,17 @@
       <!-- 搜索区域 -->
       <el-row :gutter="20">
         <el-col :span="8">
-          <el-input placeholder="请输入内容">
-            <el-button slot="append" icon="el-icon-search"></el-button>
+          <el-input
+            placeholder="请输入内容"
+            v-model="goodsQueryInfo.query"
+            clearable
+            @clear="getGoodsList"
+          >
+            <el-button slot="append" icon="el-icon-search" @click="getGoodsList"></el-button>
           </el-input>
         </el-col>
-        <el-col :span="4">
+        <el-col :span="8">
+          <el-button type="primary" @click="clearInputQuery">重置</el-button>
           <el-button type="primary">添加商品</el-button>
         </el-col>
       </el-row>
@@ -93,6 +99,11 @@ export default {
     // 3、监控页码数的变化
     handleCurrentChange(newPage) {
       this.goodsQueryInfo.pagenum = newPage
+      this.getGoodsList()
+    },
+    // 4、重置搜索内容,并重置列表
+    clearInputQuery() {
+      this.goodsQueryInfo.query = ''
       this.getGoodsList()
     }
   }
