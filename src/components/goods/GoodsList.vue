@@ -23,7 +23,7 @@
         </el-col>
         <el-col :span="8">
           <el-button type="primary" @click="clearInputQuery">重置</el-button>
-          <el-button type="primary">添加商品</el-button>
+          <el-button type="primary" @click="addGoodsInfo">添加商品</el-button>
         </el-col>
       </el-row>
 
@@ -37,9 +37,14 @@
           <template v-slot="addTime">{{ addTime.row.add_time | dataFormat }}</template>
         </el-table-column>
         <el-table-column label="操作" width="120">
-          <template slot-scope>
+          <template v-slot="goods">
             <el-button type="primary" icon="el-icon-edit" size="mini"></el-button>
-            <el-button type="danger" icon="el-icon-delete" size="mini"></el-button>
+            <el-button
+              type="danger"
+              icon="el-icon-delete"
+              size="mini"
+              @click="deleteGoodsId(goods.row.goods_id)"
+            ></el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -105,6 +110,31 @@ export default {
     clearInputQuery() {
       this.goodsQueryInfo.query = ''
       this.getGoodsList()
+    },
+    // 5、删除当前商品数据
+    async deleteGoodsId(id) {
+      const confirmResult = await this.$confirm(
+        '此操作将永久删除该商品, 是否继续?',
+        '提示',
+        {
+          confirmButtonText: '确定',
+          cancelButtonText: '取消',
+          type: 'warning'
+        }
+      ).catch(err => err)
+      if (confirmResult !== 'confirm') {
+        return this.$message.info('取消删除商品！')
+      }
+      const { data: res } = await this.$api.delete('goods/' + id)
+      if (res.meta.status !== 200) {
+        return this.$message.error('删除商品失败')
+      }
+      this.$message.success('删除商品成功！')
+      this.getGoodsList()
+    },
+    // 6、添加商品
+    addGoodsInfo() {
+      this.$router.push('/goods/add')
     }
   }
 }
