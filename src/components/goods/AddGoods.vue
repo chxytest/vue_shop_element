@@ -92,7 +92,7 @@
           </el-tab-pane>
           <el-tab-pane label="商品内容" name="4">
             <quill-editor v-model="addGoodsForm.goods_introduce"></quill-editor>
-            <el-button type="primary" class="add-goods-btn">添加商品</el-button>
+            <el-button type="primary" class="add-goods-btn" @click="addGoods">添加商品</el-button>
           </el-tab-pane>
         </el-tabs>
       </el-form>
@@ -106,6 +106,8 @@
 </template>
 
 <script>
+import _ from 'lodash'
+
 export default {
   name: 'AddGoods',
   data() {
@@ -119,7 +121,8 @@ export default {
         goods_number: 0,
         goods_cat: [],
         pics: [],
-        goods_introduce: ''
+        goods_introduce: '',
+        attrs: []
       },
       addGoodsFormRules: {
         // 商品表单的校验规则
@@ -250,7 +253,7 @@ export default {
     },
     // 5、监听图片预览
     handlePreview(file) {
-      console.log(file)
+      // console.log(file)
       this.previewPath = file.response.data.url
       this.previewVisible = true
     },
@@ -279,6 +282,47 @@ export default {
       // 将图片信息 push 到 addGoodsForm 的 pics 数组中
       this.addGoodsForm.pics.push(picInfo)
       // console.log(this.addGoodsForm)
+    },
+    // 8、添加商品
+    addGoods() {
+      this.$refs.addGoodsFormRef.validate(async valid => {
+        if (!valid) return this.$message.error('请输入必填项！')
+        // 使用 lodash 的深拷贝方法对 addGoodsForm 进行拷贝，并转换 goods_cat
+        const cloneGoodsForm = _.cloneDeep(this.addGoodsForm)
+        cloneGoodsForm.goods_cat = cloneGoodsForm.goods_cat.join(',')
+        // 处理 addGoodsForm 中的 attrs，包括动态参数 manyTableData 和静态属性 onlyTableData
+        // this.manyTableData.forEach(item => {
+        //   const manyAttr = {
+        //     attr_id: item.attr_id,
+        //     attr_value: item.attr_vals.join(' ')
+        //   }
+        //   this.addGoodsForm.attrs.push(manyAttr)
+        // })
+        // this.onlyTableData.forEach(item => {
+        //   const onlyAttr = { attr_id: item.attr_id, attr_value: item.attr_vals }
+        //   this.addGoodsForm.attrs.push(onlyAttr)
+        // })
+        // cloneGoodsForm.attrs = this.addGoodsForm.attrs
+        this.manyTableData.forEach(item => {
+          const manyAttr = {
+            attr_id: item.attr_id,
+            attr_value: item.attr_vals.join(' ')
+          }
+          cloneGoodsForm.attrs.push(manyAttr)
+        })
+        this.onlyTableData.forEach(item => {
+          const onlyAttr = { attr_id: item.attr_id, attr_value: item.attr_vals }
+          cloneGoodsForm.attrs.push(onlyAttr)
+        })
+        // console.log(this.addGoodsForm)
+        // console.log(cloneGoodsForm)
+        const { data: res } = await this.$api.post('goods', cloneGoodsForm)
+        if (res.meta.status !== 201) {
+          return this.$message.error('添加商品失败！')
+        }
+        this.$message.success('添加商品成功！')
+        this.$router.push('/goods')
+      })
     }
   }
 }
