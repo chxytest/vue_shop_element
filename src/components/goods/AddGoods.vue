@@ -76,11 +76,32 @@
               <el-input v-model="item.attr_vals"></el-input>
             </el-form-item>
           </el-tab-pane>
-          <el-tab-pane label="商品图片" name="3">商品图片</el-tab-pane>
-          <el-tab-pane label="商品内容" name="4">商品内容</el-tab-pane>
+          <el-tab-pane label="商品图片" name="3">
+            <el-upload
+              class="upload-demo"
+              action="http://127.0.0.1:8888/api/private/v1/upload"
+              :on-preview="handlePreview"
+              :on-remove="handleRemove"
+              list-type="picture"
+              :headers="headerObj"
+              :on-success="handleSuccess"
+            >
+              <el-button size="small" type="primary">点击上传</el-button>
+              <!-- <div slot="tip" class="el-upload__tip">只能上传jpg/png文件，且不超过500kb</div> -->
+            </el-upload>
+          </el-tab-pane>
+          <el-tab-pane label="商品内容" name="4">
+            <quill-editor v-model="addGoodsForm.goods_introduce"></quill-editor>
+            <el-button type="primary" class="add-goods-btn">添加商品</el-button>
+          </el-tab-pane>
         </el-tabs>
       </el-form>
     </el-card>
+
+    <!-- 图片弹窗 -->
+    <el-dialog title="图片预览" :visible.sync="previewVisible" width="50%">
+      <img :src="previewPath" alt class="previewImage" />
+    </el-dialog>
   </div>
 </template>
 
@@ -96,7 +117,9 @@ export default {
         goods_price: 0,
         goods_weight: 0,
         goods_number: 0,
-        goods_cat: []
+        goods_cat: [],
+        pics: [],
+        goods_introduce: ''
       },
       addGoodsFormRules: {
         // 商品表单的校验规则
@@ -145,7 +168,14 @@ export default {
         children: 'children'
       },
       manyTableData: [], // 商品动态参数分类列表数据
-      onlyTableData: [] // 商品静态属性分类列表数据
+      onlyTableData: [], // 商品静态属性分类列表数据
+      uploadUrl: 'http://127.0.0.1:8888/api/private/v1/upload', // 上传图片地址
+      headerObj: {
+        // upload组件需要设置 token
+        Authorization: window.sessionStorage.getItem('token')
+      },
+      previewPath: '',
+      previewVisible: false
     }
   },
   created() {
@@ -166,11 +196,11 @@ export default {
         return this.$message.error('获取商品分类数据失败')
       }
       this.goodsCategoriesList = res.data
-      console.log(this.goodsCategoriesList)
+      // console.log(this.goodsCategoriesList)
     },
     // 2、监听级联选择器中的变化
     handleChange() {
-      console.log(this.addGoodsForm.goods_cat)
+      // console.log(this.addGoodsForm.goods_cat)
       if (this.addGoodsForm.goods_cat.length !== 3) {
         this.addGoodsForm.goods_cat = []
       }
@@ -203,7 +233,7 @@ export default {
             item.attr_vals.length === 0 ? [] : item.attr_vals.split(' ')
         })
         this.manyTableData = res.data
-        console.log(this.manyTableData)
+        // console.log(this.manyTableData)
       } else if (this.activeIndex === '2') {
         const { data: res } = await this.$api.get(
           `categories/${this.categoriesId}/attributes`,
@@ -215,8 +245,40 @@ export default {
           return this.$message.error('获取静态属性列表数据失败！')
         }
         this.onlyTableData = res.data
-        console.log(this.onlyTableData)
+        // console.log(this.onlyTableData)
       }
+    },
+    // 5、监听图片预览
+    handlePreview(file) {
+      console.log(file)
+      this.previewPath = file.response.data.url
+      this.previewVisible = true
+    },
+    // 6、处理移除图片的操作
+    handleRemove(file) {
+      // console.log(file)
+      // 获取将要删除图片的临时路径
+      const filePath = file.response.data.tmp_path
+      // console.log(filePath)
+      // 从 pics 中找到要商品图片的索引
+      const fileIndex = this.addGoodsForm.pics.findIndex(
+        item => item.pic === filePath
+      )
+      // console.log(fileIndex)
+      // 使用 splice 方法将图片从 pics 数组中删除
+      this.addGoodsForm.pics.splice(fileIndex, 1)
+      // console.log(this.addGoodsForm)
+    },
+    // 7、监听图片上传成功
+    handleSuccess(res) {
+      console.log(res)
+      // 拼接图片信息
+      const picInfo = {
+        pic: res.data.tmp_path
+      }
+      // 将图片信息 push 到 addGoodsForm 的 pics 数组中
+      this.addGoodsForm.pics.push(picInfo)
+      // console.log(this.addGoodsForm)
     }
   }
 }
@@ -228,5 +290,11 @@ export default {
 }
 .el-checkbox {
   margin: 0 10px 0 0 !important;
+}
+.previewImage {
+  width: 100%;
+}
+.add-goods-btn {
+  margin-top: 15px;
 }
 </style>

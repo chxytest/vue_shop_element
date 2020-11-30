@@ -7,6 +7,12 @@ import './assets/css/global.css'
 import './assets/fonts/iconfont.css'
 import TreeTable from 'vue-table-with-tree-grid'
 
+// 引入 vue-quill-editor 组件并注册
+import VueQuillEditor from 'vue-quill-editor'
+import 'quill/dist/quill.core.css' // import styles
+import 'quill/dist/quill.snow.css' // for snow theme
+import 'quill/dist/quill.bubble.css' // for bubble theme
+
 // 导入 axios 并挂载到根实例上，设置访问基础地址路径
 import axios from 'axios'
 Vue.prototype.$api = axios
@@ -18,7 +24,9 @@ axios.interceptors.request.use(config => {
   return config
 })
 Vue.config.productionTip = false
+
 Vue.component('tree-table', TreeTable)
+Vue.use(VueQuillEditor)
 
 // 时间过滤器
 Vue.filter('dataFormat', function (originVal) {
