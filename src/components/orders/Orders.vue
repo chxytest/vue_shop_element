@@ -128,7 +128,7 @@ export default {
       const { data: res } = await this.$api.get('orders', {
         params: this.queryOrdersInfo
       })
-      console.log(res)
+      // console.log(res)
       if (res.meta.status !== 200) {
         return this.$message.error('获取订单列表数据失败！')
       }
@@ -156,7 +156,7 @@ export default {
     // 6、获取物流信息数据
     async showlogisticsInfo() {
       const { data: res } = await this.$api.get('/kuaidi/')
-      console.log(res)
+      // console.log(res)
       if (res.meta.status !== 200) {
         return this.$message.error('获取物流信息失败！')
       }
